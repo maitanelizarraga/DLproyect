@@ -1,37 +1,111 @@
-# EXPLORATORY DATA ANALYSIS
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
+
+# CONFIGURACIÓN DE ESTILO PROFESIONAL
+sns.set_theme(style="whitegrid")
 
 def importarcsv(): 
-    import pandas as pd 
-    df = pd.read_csv("data/insurance.csv") 
+    # Aseguramos la ruta correcta según tu estructura /data
+    ruta = "data/insurance.csv"
+    if not os.path.exists(ruta):
+        raise FileNotFoundError(f"No se encontró el archivo en {ruta}")
+    df = pd.read_csv(ruta) 
     return df
 
 def initialinspection(df): 
-    print("ANALYSIS:")
-    print("First row:" + "\n" + str(df.iloc[0])) 
-    print(" ")
-    print("Data types:" + "\n" + str(df.dtypes)) 
-    print(" ")
-    print("Shape:" + "\n" + str(df.shape)) 
-    print(" ")
-    print("Missing values:" + "\n" + str(df.isnull().sum())) 
-    print(" ")
-    print("Unique values:" + "\n" + str(df.nunique()))
-    print(" ")
+    print("=== INSPECCIÓN INICIAL ===")
+    print(f"Dimensiones: {df.shape}")
+    print("\nTipos de Datos y Nulos:")
+    print(df.info())
+    print("\nEstadísticas Descriptivas:")
+    print(df.describe())
+    print("\nConteo de Fumadores (Variable Crítica):")
+    print(df['smoker'].value_counts())
 
 def datacleaning(df): 
-    #
+    print("\n=== DATA CLEANING ===")
+    # 1. Eliminar duplicados (Mantenemos la integridad de los datos)
+    initial_count = len(df)
+    df = df.drop_duplicates()
+    if len(df) < initial_count:
+        print(f"Se eliminaron {initial_count - len(df)} filas duplicadas.")
+    
+    # 2. Análisis de Outliers en la variable objetivo (Charges)
+    # Justificación: Importante para elegir la Loss Function (Capítulo 5)
+    q1 = df['charges'].quantile(0.25)
+    q3 = df['charges'].quantile(0.75)
+    iqr = q3 - q1
+    outliers = df[(df['charges'] < (q1 - 1.5 * iqr)) | (df['charges'] > (q3 + 1.5 * iqr))]
+    print(f"Se detectaron {len(outliers)} posibles valores atípicos en 'charges'.")
+    
     return df
 
-#def eda(df): 
+def visual_eda(df): 
+    print("\n=== GENERANDO Y MOSTRANDO VISUALIZACIONES ===")
     
+    # 1. Crear carpeta para organizar el proyecto (Estructura profesional)
+    folder_name = "visualizations"
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+        print(f"Carpeta '{folder_name}' creada.")
 
+    # --- Gráfico 1: Distribución de Cargos ---
+    plt.figure(figsize=(10, 5))
+    sns.histplot(df['charges'], kde=True, color='blue')
+    plt.title('Distribución de Cargos Médicos (Target)')
+    #plt.savefig(f'{folder_name}/eda_distribucion.png') # Se guarda en la carpeta
+    plt.show() # Se muestra en pantalla
 
+    # --- Gráfico 2: Matriz de Correlación ---
+    plt.figure(figsize=(8, 6))
+    numeric_df = df.select_dtypes(include=[np.number])
+    sns.heatmap(numeric_df.corr(), annot=True, cmap='coolwarm', fmt=".2f")
+    plt.title('Matriz de Correlación de Variables Numéricas')
+    #plt.savefig(f'{folder_name}/eda_correlacion.png')
+    plt.show()
+
+    # --- Gráfico 3: Edad vs Cargos segmentado por Fumador ---
+    # Este es el gráfico más importante para defender tu Red Neuronal
+    plt.figure(figsize=(10, 6))
+    sns.scatterplot(x='age', y='charges', hue='smoker', data=df, palette='magma', alpha=0.7)
+    plt.title('Relación Edad y Cargos según Tabaquismo')
+    #plt.savefig(f'{folder_name}/eda_segmentacion_fumadores.png')
+    plt.show()
+
+    print(f"Análisis visual terminado. Todos los archivos están en la carpeta '{folder_name}/'.")
 
 def main():
-    df = importarcsv() 
-    initialinspection(df)
-    df = datacleaning(df)
-    #eda(df)
-    
+    try:
+
+
+        # Import dataset
+        df = pd.read_csv("data/insurance.csv") 
+        
+        # Fast view of the dataset
+        print(f"Dataset cargado: {df.shape[0]} filas.")
+        
+        # Delete duplicates
+        df = df.drop_duplicates()
+        
+
+
+        
+        df = importarcsv() 
+        initialinspection(df)
+        df = datacleaning(df)
+        visual_eda(df) 
+        
+        # Save cleaned data for future use
+        df.to_csv("data/insurance_cleaned.csv", index=False)
+        
+    except Exception as e:
+        print(f"Error durante el proceso: {e}")
+        
+    except Exception as e:
+        print(f"Error: {e}. Asegúrate de que el archivo esté en 'data/insurance.csv'")
+
 if __name__ == "__main__": 
     main()

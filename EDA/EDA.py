@@ -8,71 +8,69 @@ import os
 sns.set_theme(style="whitegrid")
 
 def importarcsv(): 
-    # Aseguramos la ruta correcta según tu estructura /data
-    ruta = "data/insurance.csv"
-    if not os.path.exists(ruta):
-        raise FileNotFoundError(f"No se encontró el archivo en {ruta}")
-    df = pd.read_csv(ruta) 
+    # Ensure the correct path to the dataset
+    route = "data/insurance.csv"
+    if not os.path.exists(route):
+        raise FileNotFoundError(f"File not found in the next route: {route}")
+    df = pd.read_csv(route) 
     return df
 
 def initialinspection(df): 
-    print("=== INSPECCIÓN INICIAL ===")
-    print(f"Dimensiones: {df.shape}")
-    print("\nTipos de Datos y Nulos:")
+    print("INITIAL INSPECTION")
+    print(f"Dimensions: {df.shape}")
+    print("\nData types and nulls:")
     print(df.info())
-    print("\nEstadísticas Descriptivas:")
+    print("\nDescriptive Statistics:")
     print(df.describe())
-    print("\nConteo de Fumadores (Variable Crítica):")
+    print("\nSmoker Count:")
     print(df['smoker'].value_counts())
 
 def datacleaning(df): 
     print("\n=== DATA CLEANING ===")
-    # 1. Eliminar duplicados (Mantenemos la integridad de los datos)
+    # Delete duplicates
     initial_count = len(df)
     df = df.drop_duplicates()
     if len(df) < initial_count:
-        print(f"Se eliminaron {initial_count - len(df)} filas duplicadas.")
+        print(f"Duplicated rows deleted: {initial_count - len(df)}")
     
-    # 2. Análisis de Outliers en la variable objetivo (Charges)
-    # Justificación: Importante para elegir la Loss Function (Capítulo 5)
+    # 2. Outliers analysis in 'charges' (Target Variable)
+    # Important to choose Loss Function
     q1 = df['charges'].quantile(0.25)
     q3 = df['charges'].quantile(0.75)
     iqr = q3 - q1
     outliers = df[(df['charges'] < (q1 - 1.5 * iqr)) | (df['charges'] > (q3 + 1.5 * iqr))]
-    print(f"Se detectaron {len(outliers)} posibles valores atípicos en 'charges'.")
+    print(f"Possible atipic values detected in 'charges': {len(outliers)} ")
     
     return df
 
 def visual_eda(df): 
-    print("\n=== GENERANDO Y MOSTRANDO VISUALIZACIONES ===")
+    print("\n GENERATING AND SHOWING VISUALIZATIONS")
     
-    # 1. Crear carpeta para organizar el proyecto (Estructura profesional)
     folder_name = "visualizations"
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
-        print(f"Carpeta '{folder_name}' creada.")
+        print(f"Foulder '{folder_name}' created.")
 
     #Graph 1: Distribution of Charges 
     plt.figure(figsize=(10, 5))
     sns.histplot(df['charges'], kde=True, color='blue')
     plt.title('Distribution of Medical Charges (Target)')
-    #plt.savefig(f'{folder_name}/eda_distribucion.png') # Se guarda en la carpeta
-    plt.show() # Se muestra en pantalla
+    #plt.savefig(f'{folder_name}/eda_distribution.png') 
+    plt.show()
 
     #Graph 2: Correlation Matrix 
     plt.figure(figsize=(8, 6))
     numeric_df = df.select_dtypes(include=[np.number])
     sns.heatmap(numeric_df.corr(), annot=True, cmap='coolwarm', fmt=".2f")
     plt.title('Correlation Matrix of Numeric Variables')
-    #plt.savefig(f'{folder_name}/eda_correlacion.png')
+    #plt.savefig(f'{folder_name}/eda_correlation.png')
     plt.show()
 
     #Graph 3: Age vs Charges by Smoker/Non-Smoker
-    # Este es el gráfico más importante para defender tu Red Neuronal
     plt.figure(figsize=(10, 6))
     sns.scatterplot(x='age', y='charges', hue='smoker', data=df, palette='magma', alpha=0.7)
     plt.title('Age vs Charges by Smoker/Non-Smoker')
-    #plt.savefig(f'{folder_name}/eda_segmentacion_fumadores.png')
+    #plt.savefig(f'{folder_name}/eda_segmentation_smokers.png')
     plt.show()
 
 
@@ -128,10 +126,10 @@ def main():
         df.to_csv("data/insurance_cleaned.csv", index=False)
         
     except Exception as e:
-        print(f"Error durante el proceso: {e}")
+        print(f"Error during process: {e}")
         
     except Exception as e:
-        print(f"Error: {e}. Asegúrate de que el archivo esté en 'data/insurance.csv'")
+        print(f"Error: {e}. Make sure the csv file is in the following route:'data/insurance.csv'")
 
 if __name__ == "__main__": 
     main()

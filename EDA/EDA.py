@@ -52,30 +52,56 @@ def visual_eda(df):
         os.makedirs(folder_name)
         print(f"Carpeta '{folder_name}' creada.")
 
-    # --- Gráfico 1: Distribución de Cargos ---
+    #Graph 1: Distribution of Charges 
     plt.figure(figsize=(10, 5))
     sns.histplot(df['charges'], kde=True, color='blue')
-    plt.title('Distribución de Cargos Médicos (Target)')
+    plt.title('Distribution of Medical Charges (Target)')
     #plt.savefig(f'{folder_name}/eda_distribucion.png') # Se guarda en la carpeta
     plt.show() # Se muestra en pantalla
 
-    # --- Gráfico 2: Matriz de Correlación ---
+    #Graph 2: Correlation Matrix 
     plt.figure(figsize=(8, 6))
     numeric_df = df.select_dtypes(include=[np.number])
     sns.heatmap(numeric_df.corr(), annot=True, cmap='coolwarm', fmt=".2f")
-    plt.title('Matriz de Correlación de Variables Numéricas')
+    plt.title('Correlation Matrix of Numeric Variables')
     #plt.savefig(f'{folder_name}/eda_correlacion.png')
     plt.show()
 
-    # --- Gráfico 3: Edad vs Cargos segmentado por Fumador ---
+    #Graph 3: Age vs Charges by Smoker/Non-Smoker
     # Este es el gráfico más importante para defender tu Red Neuronal
     plt.figure(figsize=(10, 6))
     sns.scatterplot(x='age', y='charges', hue='smoker', data=df, palette='magma', alpha=0.7)
-    plt.title('Relación Edad y Cargos según Tabaquismo')
+    plt.title('Age vs Charges by Smoker/Non-Smoker')
     #plt.savefig(f'{folder_name}/eda_segmentacion_fumadores.png')
     plt.show()
 
-    print(f"Análisis visual terminado. Todos los archivos están en la carpeta '{folder_name}/'.")
+
+    #Graph 4: Charges for smokers vs non-smokers
+    plt.figure(figsize=(6,4))
+    sns.boxplot(x="smoker", y="charges", data=df)
+    plt.title("Charges by smoker/non-smoker")
+    plt.show()
+
+    #Graph 5: Charges by sex
+    plt.figure(figsize=(6,4))
+    sns.boxplot(x="sex", y="charges", data=df)
+    plt.title("Charges by sex")
+    plt.show()
+
+    #Graph 6: Charges by region
+    plt.figure(figsize=(8,4))
+    sns.boxplot(x="region", y="charges", data=df)
+    plt.title("Charges by region")
+    plt.show()
+
+
+    #Graph 7: BMI vs Charges coloreado por fumador
+    plt.figure(figsize=(6,4))
+    sns.scatterplot(x="bmi", y="charges", hue="smoker", data=df)
+    plt.title("BMI vs charges by smoker/non-smoker")
+    plt.show()
+
+
 
 def main():
     try:

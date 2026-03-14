@@ -93,7 +93,7 @@ def visual_eda(df):
     plt.show()
 
 
-    #Graph 7: BMI vs Charges coloreado por fumador
+    #Graph 7: BMI vs Charges coloured by smoker
     plt.figure(figsize=(6,4))
     sns.scatterplot(x="bmi", y="charges", hue="smoker", data=df)
     plt.title("BMI vs charges by smoker/non-smoker")

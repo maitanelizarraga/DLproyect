@@ -87,7 +87,7 @@ print(f"Best Hyperparameters: {best_params}")
 class InsurancePriceModel(nn.Module):
     def __init__(self, input_dim, n_neurons):
         super(InsurancePriceModel, self).__init__()
-        # Using Function Composition to capture non-linearity (Chapter 4)
+        # Using Function Composition to capture non-linearity with ReLU activations
         self.network = nn.Sequential(
             nn.Linear(input_dim, n_neurons),
             nn.ReLU(),
@@ -179,3 +179,14 @@ plt.legend()
 plt.savefig('visualizations/training_history.png')
 
 print("Pipeline finished successfully.")
+
+
+
+# Graphic to visualize predictions vs actual values in USD
+plt.figure(figsize=(8, 8))
+plt.scatter(real_targets, real_predictions, alpha=0.5, color='blue')
+plt.plot([real_targets.min(), real_targets.max()], [real_targets.min(), real_targets.max()], 'r--', lw=2)
+plt.title('Predictions vs Actual Values (USD)')
+plt.xlabel('Actual Costs')
+plt.ylabel('Predicted Costs')
+plt.show()

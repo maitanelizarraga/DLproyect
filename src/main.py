@@ -6,6 +6,7 @@ def main():
     os.system("python src/EDA.py")
     os.system("python src/preprocesing.py")
     os.system("python src/pytorch.py")
+    os.system("python src/baseline.py")
     print("--- PIPELINE FINISHED SUCCESSFULLY ---")
 
 if __name__ == "__main__":

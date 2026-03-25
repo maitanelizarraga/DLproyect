@@ -32,6 +32,8 @@ def run_pytorch_model():
     y_val_np   = pd.read_csv(os.path.join(data_folder, "y_val.csv")).values
     y_test_np  = pd.read_csv(os.path.join(data_folder, "y_test.csv")).values
 
+    print("Preprocessed files loaded successfully.")
+
     X_train_t = torch.tensor(X_train_np, dtype=torch.float32)
     y_train_t = torch.tensor(y_train_np, dtype=torch.float32)
     X_val_t   = torch.tensor(X_val_np, dtype=torch.float32)
@@ -61,10 +63,13 @@ def run_pytorch_model():
             v_loss = criterion(model(X_val_t.to(device)), y_val_t.to(device))
         return v_loss.item()
 
+    print("Running Optuna trials...")
     sampler = optuna.samplers.TPESampler(seed=42)
     study = optuna.create_study(direction="minimize", sampler=sampler)
     study.optimize(objective, n_trials=15)
     best_params = study.best_params
+    print(f"Best Hyperparameters: {best_params}")
+
 
     # 3. FINAL TRAINING
     model = InsurancePriceModel(X_train_t.shape[1], best_params['n_neurons']).to(device)
@@ -77,25 +82,38 @@ def run_pytorch_model():
     model_save_path = "models/model_insurance.pth"
     if not os.path.exists("models"): os.makedirs("models")
 
+    print(f"Training final model on {device}...")
+
     for epoch in range(epochs):
         model.train()
         batch_losses = []
         for X_batch, y_batch in train_loader:
             X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+            
+            # Forward and Backward passes
             optimizer.zero_grad()
             loss = criterion(model(X_batch), y_batch)
             loss.backward()
             optimizer.step()
             batch_losses.append(loss.item())
         
-        train_losses.append(np.mean(batch_losses))
+        avg_train_loss = np.mean(batch_losses)
+        train_losses.append(avg_train_loss)
+        
+        # Validation Phase & Implicit Early Stopping
         model.eval()
         with torch.no_grad():
-            v_loss = criterion(model(X_val_t.to(device)), y_val_t.to(device)).item()
+            v_preds = model(X_val_t.to(device))
+            v_loss = criterion(v_preds, y_val_t.to(device)).item()
             val_losses.append(v_loss)
+
+            # Saving only the best performing state
             if v_loss < best_val_loss:
                 best_val_loss = v_loss
                 torch.save(model.state_dict(), model_save_path)
+        
+        if (epoch + 1) % 10 == 0:
+            print(f"Epoch [{epoch+1}/{epochs}] | Train Loss: {avg_train_loss:.4f} | Val Loss: {v_loss:.4f}")
 
     # 4. FINAL EVALUATION & PLOTS
     model.load_state_dict(torch.load(model_save_path))

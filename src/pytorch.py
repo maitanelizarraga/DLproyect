@@ -61,7 +61,8 @@ def run_pytorch_model():
             v_loss = criterion(model(X_val_t.to(device)), y_val_t.to(device))
         return v_loss.item()
 
-    study = optuna.create_study(direction="minimize")
+    sampler = optuna.samplers.TPESampler(seed=42)
+    study = optuna.create_study(direction="minimize", sampler=sampler)
     study.optimize(objective, n_trials=15)
     best_params = study.best_params
 

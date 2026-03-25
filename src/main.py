@@ -8,8 +8,10 @@ from EDA import main as run_eda
 from preprocesing import main as run_preprocessing
 from pytorch import run_pytorch_model
 from baseline import run_baseline
+from utils import set_seed
 
 def main():
+    set_seed(42)
     print("\n" + "="*50)
     print("      STARTING INSURANCE PRICE PREDICTION PIPELINE")
     print("="*50)

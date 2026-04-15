@@ -1,86 +1,62 @@
-import kagglehub
-
-# Download latest version
-path = kagglehub.dataset_download("paultimothymooney/chest-xray-pneumonia")
-
-print("Path to dataset files:", path)
-
-
-
-import torch
 import os
-
-# Configurar el dispositivo (Crucial para el trabajo)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Trabajando con: {device}")
-
-# Rutas basadas en tu descarga de kagglehub
-base_dir = os.path.join(path, 'chest_xray')
-train_dir = os.path.join(base_dir, 'train')
-test_dir = os.path.join(base_dir, 'test')
-val_dir = os.path.join(base_dir, 'val')
-
-
-## Defining of Transforms
-from torchvision import transforms
-
-# Transformaciones para entrenamiento (con aumento de datos)
-train_transform = transforms.Compose([
-    transforms.Resize((224, 224)),      # Tamaño estándar para CNNs
-    transforms.RandomHorizontalFlip(),  # Gira la imagen (más datos artificiales)
-    transforms.RandomRotation(10),      # Rotación ligera para robustez
-    transforms.ToTensor(),              # Convierte a tensores [0, 1]
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
-
-# Transformaciones para validación y test (sin aumento, solo ajuste)
-test_transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
-
-
-## Creation of Datasets and DataLoaders
-from torchvision.datasets import ImageFolder
+import torch
+import kagglehub
+from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
 
-# Crear los objetos Dataset
-train_dataset = ImageFolder(root=train_dir, transform=train_transform)
-val_dataset = ImageFolder(root=val_dir, transform=test_transform)
-test_dataset = ImageFolder(root=test_dir, transform=test_transform)
+def get_data_loaders(batch_size=32, target_size=(224, 224)):
 
-# Crear los DataLoaders
-batch_size = 32 # Ajustable según memoria de GPU
+    # 1. Download path
+    path = kagglehub.dataset_download("paultimothymooney/chest-xray-pneumonia")
+    print("Path to dataset files:", path)
 
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    # Structure of the dataset
+    base_dir = os.path.join(path, 'chest_xray')
+    train_dir = os.path.join(base_dir, 'train')
+    val_dir = os.path.join(base_dir, 'val')
+    test_dir = os.path.join(base_dir, 'test')
 
-print(f"Imágenes de entrenamiento: {len(train_dataset)}")
-print(f"Imágenes de validación: {len(val_dataset)}")
-print(f"Imágenes de test: {len(test_dataset)}")
+    # Normalization (standar parameters)
+    norm_mean = [0.485, 0.456, 0.406]
+    norm_std = [0.229, 0.224, 0.225]
 
+    train_transform = transforms.Compose([
+        transforms.Resize(target_size),
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomRotation(10),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=norm_mean, std=norm_std)
+    ])
 
+    test_transform = transforms.Compose([
+        transforms.Resize(target_size),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=norm_mean, std=norm_std)
+    ])
 
+    # Creation of dataset
+    # ImageFolder asociates automatic folders with labels (0: NORMAL, 1: PNEUMONIA)
+    
+    train_ds = datasets.ImageFolder(root=train_dir, transform=train_transform)
+    val_ds = datasets.ImageFolder(root=val_dir, transform=test_transform)
+    test_ds = datasets.ImageFolder(root=test_dir, transform=test_transform)
 
+    # Dataloader creation
+    # num_workers > 0 acelera la carga en sistemas Linux/Mac. En Windows puede dar error, si ocurre, cambiar a 0.
+    num_workers = 2 if os.name != 'nt' else 0 
+    
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-##Visual Verification
+    # Dataset summary
+    print(f"\n[i] Dataset cargado exitosamente:")
+    print(f"    - Clases detectadas: {train_ds.classes}")
+    print(f"    - Imágenes entrenamiento: {len(train_ds)}")
+    print(f"    - Imágenes validación:    {len(val_ds)}")
+    print(f"    - Imágenes test:          {len(test_ds)}")
 
-import matplotlib.pyplot as plt
-import numpy as np
+    # Return tuples for easier assignment
+    return (train_loader, val_loader, test_loader), (train_ds, val_ds, test_ds)
 
-def imshow(img):
-    img = img / 2 + 0.5  # desnormalizar opcionalmente para ver mejor
-    npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
-    plt.show()
-
-# Obtener algunas imágenes al azar
-dataiter = iter(train_loader)
-images, labels = next(dataiter)
-
-# Mostrar imágenes y etiquetas
-classes = train_dataset.classes
-print(f"Etiquetas del batch: {[classes[l] for l in labels[:4]]}")
-imshow(images[0]) # Muestra la primera imagen del batch
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

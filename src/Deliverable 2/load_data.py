@@ -80,8 +80,9 @@ print(f"Trabajando con: {device}")
 loaders, classes = get_data_loaders()
 train_loader, val_loader, test_loader = loaders
 
-# Visualizar un ejemplo
-dataiter = iter(train_loader)
-images, labels = next(dataiter)
-print(f"Ejemplo: Esta imagen es de clase: {classes[labels[0]]}")
-imshow(images[0])
+
+# dataiter = iter(train_loader)
+# images, labels = next(dataiter)
+# classes = full_train_dataset.classes
+# print(f"Batch labels: {[classes[l] for l in labels[:4]]}")
+# imshow(images[0])

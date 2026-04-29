@@ -6,7 +6,10 @@ import matplotlib.pyplot as plt
 import os
 
 # Import everything from load_data
-from load_data import *  
+from load_data import *
+
+# --- 1. IMPORT TORCHMETRICS ---
+from torchmetrics.classification import MulticlassAccuracy, MulticlassF1Score
 
 ## Architecture (SimpleCNN)
 class SimpleCNN(nn.Module):
@@ -26,7 +29,6 @@ class SimpleCNN(nn.Module):
         self.dropout = nn.Dropout(0.3)
         
         # Fully Connected Layers
-        # 64 filters * 28 * 28 spatial size
         self.fc1 = nn.Linear(64 * 28 * 28, 128)
         self.fc2 = nn.Linear(128, 2) 
 
@@ -40,22 +42,30 @@ class SimpleCNN(nn.Module):
         x = self.fc2(x)
         return x
 
-# 1. Initialize the model AFTER device is imported
+# --- 2. INITIALIZATION & HYPERPARAMETERS ---
 model_scratch = SimpleCNN().to(device)
-
-# 2. Hyperparameters & Loss Function
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model_scratch.parameters(), lr=0.001)
-epochs = 5 # Reduced epochs for demonstration; increase for better performance
 
-# 3. Training Loop
-history = {'train_loss': [], 'val_acc': []}
+# LEARNING RATE SCHEDULER: Reduces LR by half (factor=0.5) if Val Loss doesn't improve for 2 epochs (patience=2)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
+
+# TORCHMETRICS: Defined for 2 classes (Normal & Pneumonia)
+num_classes = 2
+metric_acc = MulticlassAccuracy(num_classes=num_classes).to(device)
+metric_f1 = MulticlassF1Score(num_classes=num_classes, average='macro').to(device)
+
+epochs = 10 # Increased to 10 so the Scheduler has time to activate
+
+# --- 3. TRAINING LOOP ---
+history = {'train_loss': [], 'val_loss': [], 'val_acc': [], 'val_f1': []}
 
 print(f"Starting Training from Scratch on: {device}...")
 for epoch in range(epochs):
     model_scratch.train()
     running_loss = 0.0
     
+    # Calculate gradients in batches (as requested by teacher)
     for images, labels in train_loader:
         images, labels = images.to(device), labels.to(device)
         
@@ -67,75 +77,99 @@ for epoch in range(epochs):
         
         running_loss += loss.item()
     
-    # Validation phase
+    avg_train_loss = running_loss / len(train_loader)
+    
+    # --- VALIDATION PHASE ---
     model_scratch.eval()
-    correct = 0
-    total = 0
+    val_loss = 0.0
+    
+    # Reset metrics at the start of each validation epoch
+    metric_acc.reset()
+    metric_f1.reset()
+    
     with torch.no_grad():
         for images, labels in val_loader:
             images, labels = images.to(device), labels.to(device)
             outputs = model_scratch(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            loss = criterion(outputs, labels)
+            val_loss += loss.item()
+            
+            # Update metrics batch by batch
+            metric_acc.update(outputs, labels)
+            metric_f1.update(outputs, labels)
     
-    val_acc = 100 * correct / total
-    history['train_loss'].append(running_loss/len(train_loader))
+    avg_val_loss = val_loss / len(val_loader)
+    
+    # Compute final metric values for the epoch
+    val_acc = metric_acc.compute().item() * 100
+    val_f1 = metric_f1.compute().item() * 100
+    
+    # UPDATE SCHEDULER based on validation loss
+    scheduler.step(avg_val_loss)
+    
+    # Track history
+    history['train_loss'].append(avg_train_loss)
+    history['val_loss'].append(avg_val_loss)
     history['val_acc'].append(val_acc)
+    history['val_f1'].append(val_f1)
     
-    print(f"Epoch [{epoch+1}/{epochs}] - Loss: {running_loss/len(train_loader):.4f} - Val Acc: {val_acc:.2f}%")
+    # Get current Learning Rate to print it
+    current_lr = optimizer.param_groups[0]['lr']
+    
+    print(f"Epoch [{epoch+1}/{epochs}] - LR: {current_lr:.6f} | Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f} | Val Acc: {val_acc:.2f}% | Val F1: {val_f1:.2f}%")
 
 print("Finished Training!")
 
-
-
-# Save the model
-model_save_path = "Deliverable2/models/simple_cnn.pth"
-if not os.path.exists("models"):
-    os.makedirs("models")
+# --- 4. SAVE MODEL ---
+model_save_path = "./Deliverable2/models/simple_cnn.pth"
+# Create the foulder if not exist
+os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
 torch.save(model_scratch.state_dict(), model_save_path)
 print(f"Model saved to {model_save_path}")
 
-
-# 4. Test Evaluation
+# --- 5. TEST EVALUATION (ONLY ONCE AT THE END) ---
+print("\n--- Running Final Test Evaluation ---")
 model_scratch.eval()
-test_correct = 0
-test_total = 0
 test_loss = 0.0
+metric_acc.reset()
+metric_f1.reset()
+
 with torch.no_grad():
     for images, labels in test_loader:
         images, labels = images.to(device), labels.to(device)
         outputs = model_scratch(images)
         loss = criterion(outputs, labels)
         test_loss += loss.item()
-        _, predicted = torch.max(outputs.data, 1)
-        test_total += labels.size(0)
-        test_correct += (predicted == labels).sum().item()
+        
+        metric_acc.update(outputs, labels)
+        metric_f1.update(outputs, labels)
 
-test_acc = 100 * test_correct / test_total
 avg_test_loss = test_loss / len(test_loader)
-print(f"Test Loss: {avg_test_loss:.4f} - Test Accuracy: {test_acc:.2f}%")
+test_acc = metric_acc.compute().item() * 100
+test_f1 = metric_f1.compute().item() * 100
 
+print(f"FINAL TEST METRICS -> Loss: {avg_test_loss:.4f} | Accuracy: {test_acc:.2f}% | F1-Score: {test_f1:.2f}%")
 
-# 5. Plot Training History
-plt.figure(figsize=(12, 5))
+# --- 6. PLOT TRAINING HISTORY ---
+plt.figure(figsize=(15, 5))
 
 # Plot Loss
 plt.subplot(1, 2, 1)
-plt.plot(history['train_loss'], label='Train Loss')
-plt.title('Training Loss')
-plt.xlabel('Epoch')
+plt.plot(history['train_loss'], label='Train Loss', color='blue')
+plt.plot(history['val_loss'], label='Val Loss', color='orange')
+plt.title('Loss Evolution')
+plt.xlabel('Epochs')
 plt.ylabel('Loss')
 plt.legend()
 
-# Plot Validation Accuracy
+# Plot Metrics
 plt.subplot(1, 2, 2)
-plt.plot(history['val_acc'], label='Validation Accuracy', color='orange')
-plt.title('Validation Accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy (%)')
+plt.plot(history['val_acc'], label='Val Accuracy', color='green')
+plt.plot(history['val_f1'], label='Val F1-Score', color='purple')
+plt.title('Validation Metrics Evolution')
+plt.xlabel('Epochs')
+plt.ylabel('Percentage (%)')
 plt.legend()
 
 plt.tight_layout()
-plt.savefig('Deliverable2/visualizations/training_history_cnn.png')
 plt.show()

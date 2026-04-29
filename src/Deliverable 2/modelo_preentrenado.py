@@ -10,7 +10,7 @@ MODEL_NAME = 'resnet18'
 EPOCHS = 20           
 PATIENCE = 3          
 # Ruta directa al archivo para que solo guarde uno y lo sobrescriba
-SAVE_DIR = "./Deliverable2/models"
+SAVE_DIR = "src/Deliverable 2/models"
 os.makedirs(SAVE_DIR, exist_ok=True)
 BEST_MODEL_PATH = os.path.join(SAVE_DIR, f"best_{MODEL_NAME}.pth")
 

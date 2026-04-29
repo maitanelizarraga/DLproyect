@@ -81,7 +81,7 @@ PATIENCE = 4
 
 best_val_f1 = 0.0
 epochs_without_improvement = 0
-BEST_MODEL_PATH = "final_best_cnn.pth"
+BEST_MODEL_PATH = "src/Deliverable 2/models/final_best_cnn.pth"
 
 # --- 3. BUCLE DE ENTRENAMIENTO FINAL ---
 print("\nIniciando entrenamiento definitivo con la arquitectura óptima...")

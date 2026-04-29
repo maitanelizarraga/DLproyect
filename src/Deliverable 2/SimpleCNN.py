@@ -121,7 +121,7 @@ for epoch in range(epochs):
 print("Finished Training!")
 
 # --- 4. SAVE MODEL ---
-model_save_path = "./Deliverable2/models/simple_cnn.pth"
+model_save_path = "src/Deliverable 2/models/simple_cnn.pth"
 # Create the foulder if not exist
 os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
 torch.save(model_scratch.state_dict(), model_save_path)

@@ -121,12 +121,13 @@ if __name__ == "__main__":
     sampler = TPESampler(n_startup_trials=5, seed=42)
     pruner = MedianPruner(n_warmup_steps=2, n_startup_trials=5)
     
+ # En lugar de JournalStorage, usa una base de datos simple
+    storage_name = "sqlite:///optuna_study.db"
+
     study = optuna.create_study(
         study_name="cnn_optimization",
-        direction="maximize", 
-        storage=storage,
-        sampler=sampler,
-        pruner=pruner,
+        storage=storage_name,  # <--- Ahora usamos el archivo .db
+        direction="maximize",
         load_if_exists=True
     )
     
@@ -136,3 +137,29 @@ if __name__ == "__main__":
     print("Mejores hiperparámetros encontrados:")
     for key, value in study.best_params.items():
         print(f"    {key}: {value}")
+
+
+
+#        \n--- ¡Optimización completada! ---
+
+#Mejores hiperparámetros encontrados:
+
+#    bsize_exp: 4
+
+#    n_conv_layers: 4
+
+#    n_filters_l0: 32
+
+#    n_filters_l1: 32
+
+#    n_filters_l2: 16
+
+#   n_filters_l3: 64
+
+#    weight_init: xavier
+
+#    optimizer: Adam
+
+#    lr: 0.00031417639113887194
+
+#    beta1: 0.9435547457342313

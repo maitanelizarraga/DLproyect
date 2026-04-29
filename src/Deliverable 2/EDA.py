@@ -56,7 +56,7 @@ def perform_eda(train_ds, train_loader):
 
     total = sum(counts.values())
     for i, count in counts.items():
-        print(f"✅ Clase {class_names[i]}: {count} imágenes ({count/total:.2%})")
+        print(f" Clase {class_names[i]}: {count} imágenes ({count/total:.2%})")
     
     # 2. Análisis de Tensores y Batch
     images, labels = next(iter(train_loader))

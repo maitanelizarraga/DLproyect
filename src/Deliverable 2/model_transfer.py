@@ -102,7 +102,7 @@ for epoch in range(epochs):
 print("Finished Transfer Learning Training!")
 
 # --- 4. SAVE MODEL ---
-model_save_path = "./Deliverable2/models/transfer_vgg16.pth"
+model_save_path = "src/Deliverable 2/models/transfer_vgg16.pth"
 # Create the foulder if not exist 
 os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
 torch.save(model_transfer.state_dict(), model_save_path)

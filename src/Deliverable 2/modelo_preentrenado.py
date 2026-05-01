@@ -5,11 +5,11 @@ import torch.nn as nn
 import torch.optim as optim
 from load_data import get_data_loaders
 
-# --- CONFIGURATION ---
+# CONFIGURATION 
 MODEL_NAME = 'resnet18'
 EPOCHS = 20           
 PATIENCE = 3          
-# Ruta directa al archivo para que solo guarde uno y lo sobrescriba
+# Direct route to save the best model (only one file, it will be overwritten if a better model is found)
 SAVE_DIR = "src/Deliverable 2/models"
 os.makedirs(SAVE_DIR, exist_ok=True)
 BEST_MODEL_PATH = os.path.join(SAVE_DIR, f"best_{MODEL_NAME}.pth")
@@ -51,7 +51,7 @@ for epoch in range(EPOCHS):
         
         running_loss += loss.item()
     
-    # Validación
+    # Validation phase
     model.eval()
     val_correct = 0
     total_val = 0
@@ -64,27 +64,27 @@ for epoch in range(EPOCHS):
             total_val += labels.size(0)
             
     val_acc = 100 * val_correct / total_val
-    print(f"Época {epoch+1}/{EPOCHS} - Loss: {running_loss/len(train_loader):.4f} - Val Acc: {val_acc:.2f}%")
+    print(f"Epoch {epoch+1}/{EPOCHS} - Loss: {running_loss/len(train_loader):.4f} - Val Acc: {val_acc:.2f}%")
 
-    # --- Lógica de Checkpoint (solo el mejor) y Early Stopping ---
+    # Checkpoint Logic (only the best) and Early Stopping 
     if val_acc > best_val_acc:
         best_val_acc = val_acc
         epochs_without_improvement = 0
         
-        # Guardamos solo el state_dict para que sea más ligero y sobrescribimos el mismo archivo
+        # We save the model weights to the specified path (overwriting if it's better)
         torch.save(model.state_dict(), BEST_MODEL_PATH)
-        print(f"¡Nueva mejor precisión! Modelo actualizado en: {BEST_MODEL_PATH}")
+        print(f"New better precision! Model updated at: {BEST_MODEL_PATH}")
     else:
         epochs_without_improvement += 1
-        print(f"Sin mejora. Contador Early Stopping: {epochs_without_improvement}/{PATIENCE}")
+        print(f"No improvement. Counter Early Stopping: {epochs_without_improvement}/{PATIENCE}")
 
     if epochs_without_improvement >= PATIENCE:
-        print(f"\nEarly stopping activado tras {PATIENCE} épocas sin mejora.")
+        print(f"\nEarly stopping activated after {PATIENCE} epochs without improvement.")
         break
 
-# --- Evaluación Final ---
-print("\nCargando la mejor versión del modelo para evaluación final...")
-# Cargamos los pesos del archivo único
+# Final evaluation
+print("\nCharging the best model for final evaluation on the Test Set...")
+# Charging the weights of the best model found during training
 model.load_state_dict(torch.load(BEST_MODEL_PATH))
 model.to(device)
 model.eval()

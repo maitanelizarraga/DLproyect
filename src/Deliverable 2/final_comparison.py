@@ -7,11 +7,9 @@ from torchvision import models
 from load_data import get_data_loaders
 from torchmetrics.classification import MulticlassAccuracy, MulticlassF1Score
 
-# ==========================================
 # 1. ARCHITECTURE DEFINITIONS
-# ==========================================
 
-# --- A. SimpleCNN (Baseline) ---
+#  A. SimpleCNN (Baseline) 
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
@@ -42,7 +40,7 @@ class SimpleCNN(nn.Module):
         x = self.fc2(x)
         return x
 
-# --- B. BestCNN (Optuna Winner) ---
+#  B. BestCNN (Optuna Winner)
 class BestCNN(nn.Module):
     def __init__(self):
         super(BestCNN, self).__init__()
@@ -61,9 +59,8 @@ class BestCNN(nn.Module):
         x = x.view(x.size(0), -1)
         return self.fc(x)
 
-# ==========================================
+
 # 2. EVALUATION LOGIC
-# ==========================================
 
 def evaluate_model(model, loader, device, name):
     acc_metric = MulticlassAccuracy(num_classes=2).to(device)
@@ -81,9 +78,8 @@ def evaluate_model(model, loader, device, name):
     print(f"    - Accuracy: {acc_metric.compute().item()*100:.2f}%")
     print(f"    - F1-Score: {f1_metric.compute().item()*100:.2f}%")
 
-# ==========================================
+
 # 3. MAIN COMPARISON SCRIPT
-# ==========================================
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -98,7 +94,7 @@ if __name__ == "__main__":
     print("FINAL MODEL COMPARISON - PNEUMONIA DETECTION")
     print("="*50)
 
-    # --- 1. EVALUATE SIMPLE CNN ---
+    # 1. EVALUATE SIMPLE CNN 
     path_simple = "src/Deliverable 2/models/simple_cnn.pth" 
     if os.path.exists(path_simple):
         m1 = SimpleCNN().to(device)
@@ -107,7 +103,7 @@ if __name__ == "__main__":
     else:
         print(f"\n[!] Missing: {path_simple}")
 
-    # --- 2. EVALUATE OPTUNA MODEL ---
+    #  2. EVALUATE OPTUNA MODEL 
     path_optuna = "src/Deliverable 2/models/final_best_cnn.pth"
     if os.path.exists(path_optuna):
         m2 = BestCNN().to(device)
@@ -116,7 +112,7 @@ if __name__ == "__main__":
     else:
         print(f"\n[!] Missing: {path_optuna}")
 
-    # --- 3. EVALUATE RESNET18 (timm / Fine-tuning) ---
+    #  3. EVALUATE RESNET18 (timm / Fine-tuning) 
     path_resnet = "src/Deliverable 2/models/best_resnet18.pth"
     if os.path.exists(path_resnet):
         m3 = timm.create_model('resnet18', pretrained=False, num_classes=2).to(device)
@@ -125,7 +121,7 @@ if __name__ == "__main__":
     else:
         print(f"\n[!] Missing: {path_resnet}")
 
-    # --- 4. EVALUATE VGG16 (torchvision / Frozen Layers) ---
+    #  4. EVALUATE VGG16 (torchvision / Frozen Layers) 
     path_vgg = "src/Deliverable 2/models/transfer_vgg16.pth"
     if os.path.exists(path_vgg):
         m4 = models.vgg16(weights=None)

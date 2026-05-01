@@ -12,7 +12,7 @@ import os
 
 from load_data import get_data_loaders, device
 
-# --- 1. ARQUITECTURA DINÁMICA ---
+# Dinamic Architecture
 class DynamicCNN(nn.Module):
     def __init__(self, trial):
         super(DynamicCNN, self).__init__()
@@ -52,13 +52,13 @@ class DynamicCNN(nn.Module):
         x = self.fc(x)
         return x
 
-# --- 2. FUNCIÓN OBJETIVO DE OPTUNA ---
+# Optuna Objective Function
 def objective(trial):
     n = trial.suggest_int("bsize_exp", 4, 6) 
     batch_size = 2 ** n
     trial.set_user_attr("bsize", batch_size) 
     
-    # Redirigir la salida estándar temporalmente para no saturar la consola con la descarga de Kaggle
+
     loaders, _ = get_data_loaders(batch_size=batch_size)
     train_loader, val_loader, _ = loaders
 
@@ -79,7 +79,7 @@ def objective(trial):
     
     epochs = 5 
     
-    print(f"\\n---> Iniciando Trial {trial.number} | Batch Size: {batch_size} | Opt: {optimizer_name} | LR: {lr:.5f}")
+    print(f"\\n---> Initializing Trial {trial.number} | Batch Size: {batch_size} | Opt: {optimizer_name} | LR: {lr:.5f}")
     
     for epoch in range(epochs):
         model.train()
@@ -101,48 +101,48 @@ def objective(trial):
         
         val_f1 = metric_f1.compute().item()
         
-        # CHIVATO DE PROGRESO: Ahora verás cómo avanza
+
         print(f"    Trial {trial.number} - Epoch [{epoch+1}/{epochs}] - Val F1: {val_f1*100:.2f}%")
         
         trial.report(val_f1, epoch)
         if trial.should_prune():
-            print(f"    [!] Trial {trial.number} podado (pruned) por bajo rendimiento.")
+            print(f"    [!] Trial {trial.number} pruned because of poor performance.")
             raise optuna.exceptions.TrialPruned()
 
     return val_f1
 
-# --- 3. CONFIGURACIÓN DEL STUDY ---
+# Study Configuration
 if __name__ == "__main__":
-    print("Iniciando optimización con Optuna...")
+    print("Initializing optimization with Optuna...")
     
-    # ACTUALIZADO: Código sin warnings
+
     storage = JournalStorage(JournalFileBackend("optuna_journal.log"))
     
     sampler = TPESampler(n_startup_trials=5, seed=42)
     pruner = MedianPruner(n_warmup_steps=2, n_startup_trials=5)
     
- # En lugar de JournalStorage, usa una base de datos simple
+ # In stead of JournalStorage, use a simple database
     storage_name = "sqlite:///optuna_study.db"
 
     study = optuna.create_study(
         study_name="cnn_optimization",
-        storage=storage_name,  # <--- Ahora usamos el archivo .db
+        storage=storage_name, 
         direction="maximize",
         load_if_exists=True
     )
     
     study.optimize(objective, n_trials=15)
     
-    print("\\n--- ¡Optimización completada! ---")
-    print("Mejores hiperparámetros encontrados:")
+    print("\\n--- Optimization Completed! ---")
+    print("Best hyperparameters found:")
     for key, value in study.best_params.items():
         print(f"    {key}: {value}")
 
 
 
-#        \n--- ¡Optimización completada! ---
+#        \n--- Optimization Completed! ---
 
-#Mejores hiperparámetros encontrados:
+# Best hyperparameters found:
 
 #    bsize_exp: 4
 

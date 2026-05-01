@@ -8,18 +8,18 @@ import os
 # Import everything from load_data
 from load_data import *
 
-# --- 1. IMPORT TORCHMETRICS ---
+# IMPORT TORCHMETRICS
 from torchmetrics.classification import MulticlassAccuracy, MulticlassF1Score
 
 def get_transfer_model(num_classes=2):
-    # 1. Download the pre-trained VGG16 model
+    # Download the pre-trained VGG16 model
     model = models.vgg16(weights=models.VGG16_Weights.DEFAULT)
 
-    # 2. Freeze the pre-trained layers (Feature Extractor)
+    # Freeze the pre-trained layers (Feature Extractor)
     for param in model.parameters():
         param.requires_grad = False
 
-    # 3. Adapt the architecture (Classifier Head)
+    # Adapt the architecture (Classifier Head)
     # VGG16 ends in a 'classifier' block. We replace the last linear layer.
     num_ftrs = model.classifier[6].in_features
     
@@ -28,10 +28,10 @@ def get_transfer_model(num_classes=2):
 
     return model
 
-# --- 2. INITIALIZATION & HYPERPARAMETERS ---
+# INITIALIZATION & HYPERPARAMETERS
 model_transfer = get_transfer_model(num_classes=2).to(device)
 
-# ONLY optimize the parameters of the new classifier layer!
+# Only optimize the parameters of the new classifier layer!
 optimizer = optim.Adam(model_transfer.classifier[6].parameters(), lr=0.001)
 criterion = nn.CrossEntropyLoss()
 
@@ -45,7 +45,7 @@ metric_f1 = MulticlassF1Score(num_classes=num_classes, average='macro').to(devic
 
 epochs = 10 
 
-# --- 3. TRAINING LOOP ---
+# TRAINING LOOP 
 history = {'train_loss': [], 'val_loss': [], 'val_acc': [], 'val_f1': []}
 
 print(f"Starting Transfer Learning (VGG16) on: {device}...")
@@ -66,7 +66,7 @@ for epoch in range(epochs):
     
     avg_train_loss = running_loss / len(train_loader)
     
-    # --- VALIDATION PHASE ---
+    # VALIDATION PHASE 
     model_transfer.eval()
     val_loss = 0.0
     metric_acc.reset()
@@ -101,14 +101,14 @@ for epoch in range(epochs):
 
 print("Finished Transfer Learning Training!")
 
-# --- 4. SAVE MODEL ---
+# SAVE MODEL
 model_save_path = "src/Deliverable 2/models/transfer_vgg16.pth"
-# Create the foulder if not exist 
+# Create the folder if not exist 
 os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
 torch.save(model_transfer.state_dict(), model_save_path)
 print(f"Model saved to {model_save_path}")
 
-# --- 5. TEST EVALUATION ---
+# TEST EVALUATION
 print("\n--- Running Final Test Evaluation ---")
 model_transfer.eval()
 test_loss = 0.0
@@ -131,7 +131,7 @@ test_f1 = metric_f1.compute().item() * 100
 
 print(f"FINAL TEST METRICS -> Loss: {avg_test_loss:.4f} | Accuracy: {test_acc:.2f}% | F1-Score: {test_f1:.2f}%")
 
-# --- 6. PLOT TRAINING HISTORY (Fixed for non-interactive environments) ---
+# PLOT TRAINING HISTORY (Fixed for non-interactive environments) 
 plt.figure(figsize=(15, 5))
 
 # Plot Loss

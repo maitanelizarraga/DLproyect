@@ -20,34 +20,35 @@ def set_seed(seed):
 
 def perform_eda(train_ds, train_loader):
     print("\n" + "="*20)
-    print("--- INICIANDO EDA ---")
+    print("--- INITIALIZING EDA ---")
     print("="*20)
 
     set_seed(123) 
     
-    # --- CORRECCIÓN PARA SUBSETS ---
-    # Si train_ds es un Subset, extraemos la info del dataset original
+   
+    # CORRECTION FOR SUBSETS
+    # If train_ds is a Subset, we extract the info from the original dataset
     if isinstance(train_ds, torch.utils.data.Subset):
         full_dataset = train_ds.dataset
-        # Obtenemos los targets solo de los índices que pertenecen al subset
+        # We obtain the targets only from the indices that belong to the subset
         actual_targets = [full_dataset.targets[i] for i in train_ds.indices]
         class_names = full_dataset.classes
     else:
         actual_targets = train_ds.targets
         class_names = train_ds.classes
 
-    # 1. Análisis de Balance de Clases
+    # 1. Class analysis and distribution
     counts = Counter(actual_targets)
     
     plt.figure(figsize=(8, 5))
     sns.set_style("whitegrid")
-    # Mapeamos los nombres de las clases para el gráfico
+    # We map the names of the classes for the graph
     x_labels = [class_names[i] for i in counts.keys()]
     y_values = list(counts.values())
     
     ax = sns.barplot(x=x_labels, y=y_values, palette='magma', hue=x_labels, legend=False)
-    plt.title('Distribución de Clases (Training Set)', fontsize=14)
-    plt.ylabel('Número de Imágenes')
+    plt.title('Class Distribution (Training Set)', fontsize=14)
+    plt.ylabel('Number of Images')
     
     for p in ax.patches:
         ax.annotate(f'{int(p.get_height())}', (p.get_x() + p.get_width() / 2., p.get_height()), 
@@ -56,34 +57,35 @@ def perform_eda(train_ds, train_loader):
 
     total = sum(counts.values())
     for i, count in counts.items():
-        print(f" Clase {class_names[i]}: {count} imágenes ({count/total:.2%})")
+        print(f" Class {class_names[i]}: {count} images ({count/total:.2%})")
     
-    # 2. Análisis de Tensores y Batch
+    # 2. Class Analysis and Batch Info
     images, labels = next(iter(train_loader))
-    print(f"\n--- Info del Batch ---")
-    print(f"Dimensiones: {images.shape} (B, C, H, W)")
-    print(f"Rango píxeles: [{images.min():.2f}, {images.max():.2f}]")
+    print(f"\n--- Batch Information ---")
+    print(f"Dimensions: {images.shape} (B, C, H, W)")
+    print(f"Pixel Range: [{images.min():.2f}, {images.max():.2f}]")
 
-    # 3. Imágenes Promedio
+    # 3. Average Images
     plot_class_averages(train_ds, class_names)
 
-    # 4. Análisis de Intensidad
+    # 4. Intensity Analysis (Histograms)
     plot_intensity_analysis(images, labels, class_names)
 
-    # 5. Grid de muestras
+    # 5. Grid of samples
     show_random_batch(images, labels, class_names)
 
 def plot_class_averages(dataset, class_names):
-    print("\nGenerando imágenes promedio por clase...")
+    print("\nGenerating average images per class...")
     plt.figure(figsize=(12, 6))
     
-    # Manejo de Subset para encontrar índices por clase
+
+    # Subset management to find indexes per class
     is_subset = isinstance(dataset, torch.utils.data.Subset)
     
     for i, class_name in enumerate(class_names):
-        # Buscamos los índices que corresponden a esta clase dentro del subset/dataset
+        # We find the indexes that correspond to this class within the subset/dataset
         if is_subset:
-            # i es el índice de la clase, buscamos en el dataset original usando los índices del subset
+            # i is the class index, we look in the original dataset using the subset indices
             idx = [j for j in range(len(dataset)) if dataset.dataset.targets[dataset.indices[j]] == i][:100]
         else:
             idx = [j for j, label in enumerate(dataset.targets) if label == i][:100]
@@ -92,19 +94,19 @@ def plot_class_averages(dataset, class_names):
         
         imgs = [dataset[j][0].numpy() for j in idx]
         avg_img = np.mean(imgs, axis=0).transpose(1, 2, 0)
-        
-        # Desnormalización
+
+        # Denormalization
         avg_img = np.clip(np.array([0.229, 0.224, 0.225]) * avg_img + np.array([0.485, 0.456, 0.406]), 0, 1)
         
         plt.subplot(1, len(class_names), i+1)
         plt.imshow(avg_img)
-        plt.title(f"Promedio: {class_name}")
+        plt.title(f"Mean: {class_name}")
         plt.axis('off')
-    plt.suptitle("Análisis de Patrones Globales (Promedio)", fontsize=15)
+    plt.suptitle("Analysis of Global Patterns (Average)", fontsize=15)
     plt.show()
 
 def plot_intensity_analysis(images, labels, class_names):
-    # Buscamos índices en el tensor de labels del batch actual
+    # We find the indexes in the actual batch labels tensor
     idx_normal = (labels == 0).nonzero(as_tuple=True)[0].tolist()
     idx_pneumonia = (labels == 1).nonzero(as_tuple=True)[0].tolist()
 
@@ -113,7 +115,7 @@ def plot_intensity_analysis(images, labels, class_names):
     if len(selected_indices) == 0: return
 
     fig, axes = plt.subplots(2, len(selected_indices), figsize=(16, 8))
-    # Asegurar que axes sea 2D incluso con pocas imágenes
+    # Ensure axes is 2D even with few images
     if len(selected_indices) == 1: axes = axes.reshape(2, 1)
 
     for i, img_idx in enumerate(selected_indices):
@@ -121,13 +123,13 @@ def plot_intensity_analysis(images, labels, class_names):
         img = np.clip(np.array([0.229, 0.224, 0.225]) * img + np.array([0.485, 0.456, 0.406]), 0, 1)
         
         axes[0, i].imshow(img)
-        axes[0, i].set_title(f"Clase: {class_names[labels[img_idx]]}")
+        axes[0, i].set_title(f"Class: {class_names[labels[img_idx]]}")
         axes[0, i].axis('off')
         
         gray_img = np.mean(img, axis=2)
         axes[1, i].hist(gray_img.ravel(), bins=50, color='skyblue', edgecolor='black', alpha=0.7)
         axes[1, i].set_xlim([0, 1])
-        axes[1, i].set_ylabel("Frecuencia")
+        axes[1, i].set_ylabel("Frequency")
 
     plt.tight_layout()
     plt.show()
@@ -140,6 +142,6 @@ def show_random_batch(images, labels, class_names):
     img_np = np.clip(np.array([0.229, 0.224, 0.225]) * img_np + np.array([0.485, 0.456, 0.406]), 0, 1)
     
     plt.imshow(img_np)
-    plt.title(f"Muestra de Batch ({num_imgs} imágenes)")
+    plt.title(f"Batch Sample ({num_imgs} Images)")
     plt.axis('off')
     plt.show()

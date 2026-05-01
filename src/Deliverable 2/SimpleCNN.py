@@ -8,7 +8,7 @@ import os
 # Import everything from load_data
 from load_data import *
 
-# --- 1. IMPORT TORCHMETRICS ---
+# IMPORT TORCHMETRICS
 from torchmetrics.classification import MulticlassAccuracy, MulticlassF1Score
 
 ## Architecture (SimpleCNN)
@@ -42,7 +42,7 @@ class SimpleCNN(nn.Module):
         x = self.fc2(x)
         return x
 
-# --- 2. INITIALIZATION & HYPERPARAMETERS ---
+# INITIALIZATION & HYPERPARAMETERS
 model_scratch = SimpleCNN().to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model_scratch.parameters(), lr=0.001)
@@ -57,7 +57,7 @@ metric_f1 = MulticlassF1Score(num_classes=num_classes, average='macro').to(devic
 
 epochs = 10 # Increased to 10 so the Scheduler has time to activate
 
-# --- 3. TRAINING LOOP ---
+# TRAINING LOOP 
 history = {'train_loss': [], 'val_loss': [], 'val_acc': [], 'val_f1': []}
 
 print(f"Starting Training from Scratch on: {device}...")
@@ -79,7 +79,7 @@ for epoch in range(epochs):
     
     avg_train_loss = running_loss / len(train_loader)
     
-    # --- VALIDATION PHASE ---
+    # VALIDATION PHASE
     model_scratch.eval()
     val_loss = 0.0
     
@@ -120,14 +120,14 @@ for epoch in range(epochs):
 
 print("Finished Training!")
 
-# --- 4. SAVE MODEL ---
+# SAVE MODEL
 model_save_path = "src/Deliverable 2/models/simple_cnn.pth"
 # Create the foulder if not exist
 os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
 torch.save(model_scratch.state_dict(), model_save_path)
 print(f"Model saved to {model_save_path}")
 
-# --- 5. TEST EVALUATION (ONLY ONCE AT THE END) ---
+# TEST EVALUATION (ONLY ONCE AT THE END)
 print("\n--- Running Final Test Evaluation ---")
 model_scratch.eval()
 test_loss = 0.0
@@ -150,7 +150,7 @@ test_f1 = metric_f1.compute().item() * 100
 
 print(f"FINAL TEST METRICS -> Loss: {avg_test_loss:.4f} | Accuracy: {test_acc:.2f}% | F1-Score: {test_f1:.2f}%")
 
-# --- 6. PLOT TRAINING HISTORY ---
+# PLOT TRAINING HISTORY
 plt.figure(figsize=(15, 5))
 
 # Plot Loss

@@ -6,6 +6,10 @@ import timm
 from torchvision import models
 from load_data import get_data_loaders
 from torchmetrics.classification import MulticlassAccuracy, MulticlassF1Score
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
 
 # 1. ARCHITECTURE DEFINITIONS
 
@@ -60,23 +64,68 @@ class BestCNN(nn.Module):
         return self.fc(x)
 
 
-# 2. EVALUATION LOGIC
+# # 2. EVALUATION LOGIC
 
+# def evaluate_model(model, loader, device, name):
+#     acc_metric = MulticlassAccuracy(num_classes=2).to(device)
+#     f1_metric = MulticlassF1Score(num_classes=2, average='macro').to(device)
+    
+#     model.eval()
+#     with torch.no_grad():
+#         for images, labels in loader:
+#             images, labels = images.to(device), labels.to(device)
+#             outputs = model(images)
+#             acc_metric.update(outputs, labels)
+#             f1_metric.update(outputs, labels)
+    
+#     print(f"\n[+] Results for {name}:")
+#     print(f"    - Accuracy: {acc_metric.compute().item()*100:.2f}%")
+#     print(f"    - F1-Score: {f1_metric.compute().item()*100:.2f}%")
+
+
+# 2. EVALUATION LOGIC
 def evaluate_model(model, loader, device, name):
     acc_metric = MulticlassAccuracy(num_classes=2).to(device)
     f1_metric = MulticlassF1Score(num_classes=2, average='macro').to(device)
+    
+    # Lists to store labels for the Confusion Matrix
+    all_preds = []
+    all_targets = []
     
     model.eval()
     with torch.no_grad():
         for images, labels in loader:
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
+            
+            # Update metrics
             acc_metric.update(outputs, labels)
             f1_metric.update(outputs, labels)
+            
+            # Store predictions and true labels
+            preds = torch.argmax(outputs, dim=1)
+            all_preds.extend(preds.cpu().numpy())
+            all_targets.extend(labels.cpu().numpy())
     
+    # Print Text Results
     print(f"\n[+] Results for {name}:")
     print(f"    - Accuracy: {acc_metric.compute().item()*100:.2f}%")
     print(f"    - F1-Score: {f1_metric.compute().item()*100:.2f}%")
+    
+    # Generate and Show Confusion Matrix
+    cm = confusion_matrix(all_targets, all_preds)
+    
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                xticklabels=['Normal', 'Pneumonia'], 
+                yticklabels=['Normal', 'Pneumonia'],
+                cbar=False, annot_kws={"size": 14})
+    
+    plt.title(f'Confusion Matrix:\n{name}', fontsize=14, fontweight='bold')
+    plt.ylabel('True Label', fontsize=12)
+    plt.xlabel('Predicted Label', fontsize=12)
+    plt.tight_layout()
+    plt.show()
 
 
 # 3. MAIN COMPARISON SCRIPT

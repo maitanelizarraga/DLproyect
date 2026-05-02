@@ -7,11 +7,12 @@ from torchvision.utils import make_grid
 import random
 import os
 
+# reproducibility 1.hash op, 2.numpy, 3.torch, 4.gpu
 def set_seed(seed):
     random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed) #reproducibility for hash op.
+    np.random.seed(seed) #numpy reproducibility
+    torch.manual_seed(seed) #torch reproducibility
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)

@@ -15,20 +15,22 @@ def get_data_loaders(batch_size=32, target_size=(224, 224)):
     train_dir = os.path.join(base_dir, 'train')
     test_dir = os.path.join(base_dir, 'test')
 
+
     # Transformations definitions
     train_transform = transforms.Compose([
-        transforms.Resize(target_size),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(10),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        transforms.Resize(target_size), #change the size into 224x224 pixels
+        transforms.RandomHorizontalFlip(), #some images are rotated to avoid overfitting
+        transforms.RandomRotation(10), #some images are rotated to avoid overfitting(10º)
+        transforms.ToTensor(), #transform it into a tensor and scale the pixels values range=[0.0, 1.0]
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) #(color intensity) mean/std in each color channel for normalization (stable and faster)
     ])
 
     test_transform = transforms.Compose([
         transforms.Resize(target_size),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
+    ]) #we dont rotate as we dont want to create new images, we want to evaluate reality
+
 
 
     # CHARGE THE DATASET
@@ -67,9 +69,9 @@ def imshow(img):
     """Auxiliar function to show an image from a tensor."""
     # Denormalize approximately for visualization
     img = img * torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1) + \
-          torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
-    npimg = img.numpy()
-    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+          torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1) # it multiplies the pixels by the std and sum the mean and colores structures
+    npimg = img.numpy() #from pytorch to numpy for visualization
+    plt.imshow(np.transpose(npimg, (1, 2, 0))) #matplotlib needs a different order
     plt.axis('off')
     plt.show()
 

@@ -1,7 +1,7 @@
 import optuna
 from optuna_dashboard import run_server
 
-# 1. Need to change and put the path to your actual database file (Este es el mío (Ziortza))
+#path to dtbs
 storage = optuna.storages.RDBStorage("sqlite:///src/Deliverable 2/optuna_study.db")
 
 # 2. Launch the web server

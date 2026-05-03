@@ -20,10 +20,10 @@ def get_transfer_model(num_classes=2):
         param.requires_grad = False
 
     # Adapt the architecture (Classifier Head)
-    # VGG16 ends in a 'classifier' block. We replace the last linear layer.
+    # we get the last/classifier layer
     num_ftrs = model.classifier[6].in_features
     
-    # This new layer has requires_grad = True by default
+    # we adjust it to 2classes
     model.classifier[6] = nn.Linear(num_ftrs, num_classes)
 
     return model

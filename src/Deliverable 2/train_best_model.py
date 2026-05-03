@@ -15,10 +15,10 @@ class BestCNN(nn.Module):
 
         self.features = nn.Sequential(
             # Layer 0
-            nn.Conv2d(3, 32, kernel_size=3, padding=1),
-            nn.BatchNorm2d(32),
+            nn.Conv2d(3, 32, kernel_size=3, padding=1), #look for stains and opacities
+            nn.BatchNorm2d(32), #stabilize training
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),
+            nn.MaxPool2d(2, 2), #summarize features
             # Layer 1
             nn.Conv2d(32, 32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
@@ -42,6 +42,7 @@ class BestCNN(nn.Module):
         # Init weights with Xavier initialization for better convergence
         self.apply(self._init_weights)
 
+    #apply Xavier, bias 0
     def _init_weights(self, m):
         if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
             nn.init.xavier_normal_(m.weight)
@@ -49,10 +50,10 @@ class BestCNN(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
-        x = self.features(x)
-        x = self.global_pool(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
+        x = self.features(x) #image through the layers
+        x = self.global_pool(x) #reduce to 1x1 feature map
+        x = x.view(x.size(0), -1) #transform into vector
+        x = self.fc(x) #final diagnosis
         return x
 
 
@@ -73,7 +74,7 @@ BEST_LR = 0.00031417639113887194
 BEST_BETA1 = 0.9435547457342313
 optimizer = optim.Adam(model.parameters(), lr=BEST_LR, betas=(BEST_BETA1, 0.999))
 
-# Scheduler to give it the final professional touch
+# scheduler reduce lr if dont improve after 2 epoch
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2)
 
 metric_acc = MulticlassAccuracy(num_classes=2).to(device)

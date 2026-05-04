@@ -64,25 +64,6 @@ class BestCNN(nn.Module):
         return self.fc(x)
 
 
-# # 2. EVALUATION LOGIC
-
-# def evaluate_model(model, loader, device, name):
-#     acc_metric = MulticlassAccuracy(num_classes=2).to(device)
-#     f1_metric = MulticlassF1Score(num_classes=2, average='macro').to(device)
-    
-#     model.eval()
-#     with torch.no_grad():
-#         for images, labels in loader:
-#             images, labels = images.to(device), labels.to(device)
-#             outputs = model(images)
-#             acc_metric.update(outputs, labels)
-#             f1_metric.update(outputs, labels)
-    
-#     print(f"\n[+] Results for {name}:")
-#     print(f"    - Accuracy: {acc_metric.compute().item()*100:.2f}%")
-#     print(f"    - F1-Score: {f1_metric.compute().item()*100:.2f}%")
-
-
 # 2. EVALUATION LOGIC
 def evaluate_model(model, loader, device, name):
     acc_metric = MulticlassAccuracy(num_classes=2).to(device)

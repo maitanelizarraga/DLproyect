@@ -8,7 +8,8 @@ import kagglehub
 # Import your custom modules
 from dataset import AudioNoiseDataset
 from model import AudioTransformer
-from main import get_splits # Reusing your split function
+from main import get_splits 
+from optuna.samplers import TPESampler
 
 def objective(trial):
     """
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     print("Starting Automated Hyperparameter Optimization...")
     
     # Create an Optuna 'Study'
-    study = optuna.create_study(direction="minimize")
+    study = optuna.create_study(direction="minimize", sampler=TPESampler(seed=42))
     
     # Run 10 different combinations (trials)
     study.optimize(objective, n_trials=10)

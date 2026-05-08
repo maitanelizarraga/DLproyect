@@ -18,11 +18,11 @@ def main():
     # OPTUNA WINNING HYPERPARAMETERS:
     # ---------------------------------------------------------
 
-    BEST_LR = 0.0009082097378308439
-    BEST_D_MODEL = 512
-    BEST_NUM_LAYERS = 2
-    BEST_WEIGHT_DECAY = 1.164114588369343e-06
-    NUM_EPOCHS = 10 
+    BEST_LR = 0.003039903734101878
+    BEST_D_MODEL = 128
+    BEST_NUM_LAYERS = 3
+    BEST_WEIGHT_DECAY = 5.002333980531405e-05
+    NUM_EPOCHS = 50 
   
     # ---------------------------------------------------------
 
@@ -34,20 +34,22 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    # 1. Load FULL Data (No slicing this time!)
-    print("Loading full dataset...")
+   # 1. Load Data (Lighter version for CPU)
+    print("Loading lightweight dataset for CPU training...")
     clean_dir = kagglehub.dataset_download("pypiahmad/librispeech-asr-corpus")
     noise_dir = kagglehub.dataset_download("mmoreaux/environmental-sound-classification-50")
     
     clean_train, clean_val, _ = get_splits(clean_dir)
     noise_train, noise_val, _ = get_splits(noise_dir)
     
-    train_dataset = AudioNoiseDataset(clean_train, noise_train)
-    val_dataset = AudioNoiseDataset(clean_val, noise_val)
+    # REDUCED DATA: 8000 for training, 1000 for validation
+    # This is still a "large" dataset for a CPU, but manageable!
+    train_dataset = AudioNoiseDataset(clean_train[:8000], noise_train[:8000])
+    val_dataset = AudioNoiseDataset(clean_val[:1000], noise_val[:1000])
     
-    # Increased batch size slightly if memory allows, for smoother gradients
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+    # We use a batch size of 16 for CPU to prevent memory overflow
+    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
 
     # 2. Initialize Model with Best Architecture
     model = AudioTransformer(num_mels=64, d_model=BEST_D_MODEL, num_layers=BEST_NUM_LAYERS).to(device)
@@ -60,12 +62,14 @@ def main():
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
 
     # 3. Final Training Loop
-    print(f"\nStarting Final Training on {len(train_dataset)} sequences...")
+    print(f"\nStarting Optimized CPU Training...")
     for epoch in range(1, NUM_EPOCHS + 1):
         model.train()
         train_loss = 0.0
         
-        for batch_idx, (noisy, clean) in enumerate(train_loader):
+        # Wrap the loader in tqdm for a progress bar
+        pbar = tqdm(train_loader, desc=f"Epoch {epoch}/{NUM_EPOCHS}")
+        for batch_idx, (noisy, clean) in enumerate(pbar):
             noisy, clean = noisy.to(device), clean.to(device)
             
             optimizer.zero_grad()
@@ -73,11 +77,12 @@ def main():
             loss = criterion(predicted_clean, clean)
             loss.backward()
             
-            # Gradient clipping for sequence stability
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             
             train_loss += loss.item()
+            # Update the progress bar with the current loss
+            pbar.set_postfix({'loss': f"{loss.item():.4f}"})
             
         avg_train_loss = train_loss / len(train_loader)
         

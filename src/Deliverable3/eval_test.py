@@ -3,11 +3,9 @@ import torch.nn as nn
 import kagglehub
 import os
 from torch.utils.data import DataLoader
-
-# Import your custom modules
 from dataset import AudioNoiseDataset
 from model import AudioTransformer
-from main import get_splits # Imports your strict splitting logic
+from main import get_splits 
 
 def save_test_comparison(noisy, clean, predicted, save_dir="src/Deliverable3/images"):
     """Saves a final test result image to prove the model works on unseen data."""
@@ -36,7 +34,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Evaluating on: {device}")
 
-    # 2. Load Data Paths (using your main.py logic)
+    # 2. Load Data Paths 
     print("Locating Test Data...")
     clean_dir = kagglehub.dataset_download("pypiahmad/librispeech-asr-corpus")
     noise_dir = kagglehub.dataset_download("mmoreaux/environmental-sound-classification-50")
@@ -44,12 +42,11 @@ def main():
     _, _, clean_test = get_splits(clean_dir)
     _, _, noise_test = get_splits(noise_dir)
 
-    # Use a solid slice of the test set (e.g., 1000 files)
+    # Use a solid slice of the test set 
     test_dataset = AudioNoiseDataset(clean_test[:1000], noise_test[:1000])
     test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
 
     # 3. Load the Optimized Model
-    # Use the hyperparameters Optuna found for you
     model = AudioTransformer(num_mels=64, d_model=128, num_layers=3).to(device)
     
     model_path = "src/Deliverable3/models_optimized/best_transformer_epoch_50.pth"
@@ -86,9 +83,8 @@ def main():
     print("\n" + "="*30)
     print("      FINAL TEST RESULTS      ")
     print("="*30)
-    print(f"Test MSE Loss: {avg_test_loss:.4f}")
+    print(f"Test MSE Loss: {avg_test_loss:.4f}") #Unseen Data' performance.
     print("="*30)
-    print("You can now report this number as your 'Unseen Data' performance.")
 
 if __name__ == "__main__":
     main()

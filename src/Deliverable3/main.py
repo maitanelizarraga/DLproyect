@@ -17,7 +17,7 @@ def get_splits(directory, split_ratios=(0.8, 0.1, 0.1)):
     # Sort them first before shuffling to ensure reproducibility across different OS
     all_files.sort()
     
-    random.seed(42) # Set seed for reproducible splits!
+    random.seed(42) # Set seed for reproducible splits
     random.shuffle(all_files)
     
     total = len(all_files)

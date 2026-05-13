@@ -5,20 +5,17 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 import kagglehub
 from torch.utils.data import DataLoader
-
-# Import your custom modules
+import glob
+import random
 from dataset import AudioNoiseDataset
 from model import AudioTransformer
 
-# We can reuse the split logic we built earlier
+# We reuse the split logic we built earlier
 def get_splits(directory, split_ratios=(0.8, 0.1, 0.1)):
-    import glob
-    import random
     wav_files = glob.glob(os.path.join(directory, '**', '*.wav'), recursive=True)
     flac_files = glob.glob(os.path.join(directory, '**', '*.flac'), recursive=True)
     all_files = wav_files + flac_files
     all_files.sort()
-    random.seed(42)
     random.shuffle(all_files)
     total = len(all_files)
     return all_files[:int(total * split_ratios[0])], all_files[int(total * split_ratios[0]):int(total * split_ratios[0]) + int(total * split_ratios[1])], all_files[int(total * split_ratios[0]) + int(total * split_ratios[1]):]
@@ -48,6 +45,7 @@ def save_spectrogram_image(noisy, clean, predicted, epoch, save_dir="src/Deliver
     plt.close()
 
 def main():
+    random.seed(42)
     # 1. Setup Directories
     MODELS_DIR = "src/Deliverable3/models"
     IMAGES_DIR = "src/Deliverable3/images"
@@ -66,7 +64,7 @@ def main():
     clean_train, clean_val, _ = get_splits(clean_dir)
     noise_train, noise_val, _ = get_splits(noise_dir)
     
-    # Keep it small for testing! (Remove the [:1000] later for the real full training)
+    # For the real full training we remove the [:1000] for making it smaller and faster
     train_dataset = AudioNoiseDataset(clean_train[:1000], noise_train[:1000])
     val_dataset = AudioNoiseDataset(clean_val[:200], noise_val[:200])
     

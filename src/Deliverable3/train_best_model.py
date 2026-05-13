@@ -5,8 +5,6 @@ import torch.optim as optim
 import kagglehub
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
-# Import your custom modules
 from dataset import AudioNoiseDataset
 from model import AudioTransformer
 from train import save_spectrogram_image, get_splits
@@ -43,7 +41,7 @@ def main():
     noise_train, noise_val, _ = get_splits(noise_dir)
     
     # REDUCED DATA: 8000 for training, 1000 for validation
-    # This is still a "large" dataset for a CPU, but manageable!
+    # This is still a "large" dataset for a CPU, but manageable
     train_dataset = AudioNoiseDataset(clean_train[:8000], noise_train[:8000])
     val_dataset = AudioNoiseDataset(clean_val[:1000], noise_val[:1000])
     

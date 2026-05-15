@@ -49,7 +49,7 @@ def main():
     # 3. Load the Optimized Model
     model = AudioTransformer(num_mels=64, d_model=128, num_layers=3).to(device)
     
-    model_path = "src/Deliverable3/models_optimized/best_transformer_epoch_50.pth"
+    model_path = "src/Deliverable3/models_optimized/best_transformer.pth"
     if not os.path.exists(model_path):
         print(f"ERROR: Model file not found at {model_path}")
         return

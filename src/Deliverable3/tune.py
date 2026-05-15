@@ -34,9 +34,9 @@ def objective(trial):
     clean_train, clean_val, _ = get_splits(clean_dir)
     noise_train, noise_val, _ = get_splits(noise_dir)
     
-    # We use a VERY SMALL subset of data for tuning so it runs fast
-    train_dataset = AudioNoiseDataset(clean_train[:500], noise_train[:500])
-    val_dataset = AudioNoiseDataset(clean_val[:100], noise_val[:100])
+    # We use a small subset of data for tuning so it runs fast
+    train_dataset = AudioNoiseDataset(clean_train[:50], noise_train[:50])
+    val_dataset = AudioNoiseDataset(clean_val[:10], noise_val[:10])
     
     train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
@@ -46,8 +46,8 @@ def objective(trial):
     criterion = nn.MSELoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
 
-    # 4. Mini Training Loop (Just 2-3 epochs to see if the parameters are good)
-    NUM_TUNE_EPOCHS = 2
+    # 4. Training Loop for Tuning
+    NUM_TUNE_EPOCHS = 50
     
     for epoch in range(NUM_TUNE_EPOCHS):
         model.train()
@@ -87,11 +87,20 @@ if __name__ == "__main__":
     # Create an Optuna 'Study'
     study = optuna.create_study(direction="minimize", sampler=TPESampler(seed=42))
     
-    # Run 10 different combinations (trials)
-    study.optimize(objective, n_trials=10)
+    # Run 30 different combinations
+    study.optimize(objective, n_trials=30)
     
-    print("\n=== TUNING COMPLETE ===")
+    print("\nTUNING COMPLETE")
     print(f"Best Validation Loss: {study.best_value}")
     print("Best Hyperparameters:")
     for key, value in study.best_trial.params.items():
         print(f"  {key}: {value}")
+
+# Optuna hyperparameters results:
+#TUNING COMPLETE
+#Best Validation Loss: 171.8909454345703
+#Best Hyperparameters:
+  #lr: 0.00314288089084011
+  #d_model: 128
+  #num_layers: 3
+  #weight_decay: 3.752055855124284e-05

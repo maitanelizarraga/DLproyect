@@ -3,13 +3,12 @@ import random
 import torch
 import torchaudio
 import numpy as np
-import glob  # <--- Add this import
+import glob 
 from torch.utils.data import Dataset
 
 from load_data import load_and_format, TARGET_SR
 
 class AudioNoiseDataset(Dataset):
-    # Changed from taking directories to taking explicit lists of files
     def __init__(self, clean_files, noise_files, snr_db=5.0): 
         self.clean_files = clean_files
         self.noise_files = noise_files
@@ -33,7 +32,7 @@ class AudioNoiseDataset(Dataset):
         return len(self.clean_files)
 
     def mix_audio(self, clean_audio, noise_audio):
-        """Applies Additive Noise at a specific SNR (Slide 15)."""
+        """Applies Additive Noise at a specific SNR."""
         # Calculate power
         p_clean = np.mean(clean_audio ** 2)
         p_noise = np.mean(noise_audio ** 2)
@@ -54,7 +53,7 @@ class AudioNoiseDataset(Dataset):
         return noisy_audio
 
     def get_features(self, waveform):
-        """Transforms 1D wave to 2D Log-Mel Spectrogram Sequence (Slide 24)."""
+        """Transforms 1D wave to 2D Log-Mel Spectrogram Sequence."""
         # Convert numpy array back to torch tensor for torchaudio
         waveform_tensor = torch.FloatTensor(waveform).unsqueeze(0) 
         
@@ -78,5 +77,5 @@ class AudioNoiseDataset(Dataset):
         clean_features = self.get_features(clean_audio)
         noisy_features = self.get_features(noisy_audio)
         
-        # Returns: Input (Noisy Sequence), Target (Clean Sequence)
+        # Input (Noisy Sequence), Target (Clean Sequence)
         return noisy_features, clean_features

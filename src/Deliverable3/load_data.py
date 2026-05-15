@@ -7,13 +7,13 @@ import os
 librispeech_path = kagglehub.dataset_download("pypiahmad/librispeech-asr-corpus")
 esc50_path = kagglehub.dataset_download("mmoreaux/environmental-sound-classification-50")
 
-# 2. Setup Parameters from Slides (Page 7-11)
+# 2. Setup Parameters
 TARGET_SR = 16000  # Standard for speech processing
-DURATION = 3.0     # Let's keep clips at 3 seconds for sequence consistency
+DURATION = 3.0     # 3 seconds for sequence consistency
 
 def load_and_format(file_path):
-    # Load using Librosa (Recommended in Slide 35)
-    # sr=TARGET_SR ensures resampling (Digital Discretization)
+    # Load using Librosa
+    # sr=TARGET_SR ensures resampling 
     # mono=True ensures 1 channel
     audio, _ = librosa.load(file_path, sr=TARGET_SR, mono=True)
     
@@ -25,6 +25,5 @@ def load_and_format(file_path):
         audio = librosa.util.fix_length(audio, size=int(target_length))
     return audio
 
-# Example Usage
-# You would iterate through the folders 'librispeech_path' and 'esc50_path'
-# to create your clean/noisy pairs.
+# Aclaration:
+# We will iterate through the folders 'librispeech_path' and 'esc50_path' in order to create the clean/noisy pairs.

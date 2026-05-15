@@ -17,7 +17,7 @@ def get_splits(directory, split_ratios=(0.8, 0.1, 0.1)):
     # Sort them first before shuffling to ensure reproducibility across different OS
     all_files.sort()
     
-    random.seed(42) # Set seed for reproducible splits
+    random.seed(1) # Set seed for reproducible splits
     random.shuffle(all_files)
     
     total = len(all_files)
@@ -51,12 +51,12 @@ def main():
     val_dataset   = AudioNoiseDataset(clean_val, noise_val)
     test_dataset  = AudioNoiseDataset(clean_test, noise_test)
     
-    # Dataloaders ready for the training loop!
+    # Dataloaders ready for the training loop
     train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-    val_loader   = DataLoader(val_dataset, batch_size=16, shuffle=False) # Don't shuffle Val/Test!
+    val_loader   = DataLoader(val_dataset, batch_size=16, shuffle=False) 
     test_loader  = DataLoader(test_dataset, batch_size=16, shuffle=False)
     
-    print("SUCCESS! Data is strictly isolated without leakage.")
+    print("Data successfully loaded and splited into Train/Val/Test sets")
 
 if __name__ == "__main__":
     main()

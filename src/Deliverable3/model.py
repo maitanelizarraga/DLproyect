@@ -54,26 +54,26 @@ class AudioTransformer(nn.Module):
     def forward(self, x):
         # Input 'x' comes from DataLoader: [Batch, Channels(1), Mels(64), Time]
         
-        # Step A: Reshape for Sequence Modeling
-        # Squeeze out the channel dimension: [Batch, 64, Time]
+        # 1. Reshape for Sequence Modeling
+            # Squeeze out the channel dimension: [Batch, 64, Time]
         x = x.squeeze(1) 
-        # Swap axes to make Time the sequence dimension: [Batch, Time, 64]
+            # Swap axes to make Time the sequence dimension: [Batch, Time, 64]
         x = x.permute(0, 2, 1) 
         
-        # Step B: Pass through the Transformer blocks
+        # 2. Pass through the Transformer blocks
         x = self.input_projection(x)
         x = self.positional_encoding(x)
         x = self.transformer_encoder(x)
         
-        # Step C: Reconstruct the Clean Audio Spectrogram
+        # 3. Reconstruct the Clean Audio Spectrogram
         x = self.output_projection(x)
         
-        # Swap back to original shape: [Batch, 1, 64, Time]
+            # Swap back to original shape: [Batch, 1, 64, Time]
         x = x.permute(0, 2, 1).unsqueeze(1)
         
         return x
 
-# Quick test to ensure shapes match
+# Ensure if the shapes match
 if __name__ == "__main__":
     # Create dummy data: Batch=16, Channel=1, Mels=64, Time_steps=100
     dummy_noisy_sequence = torch.randn(16, 1, 64, 100)

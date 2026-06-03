@@ -13,8 +13,8 @@ from main import get_splits
 from torch.utils.data import DataLoader
 
 # Set seeds for reproducibility
-random.seed(42)
-np.random.seed(42)
+random.seed(1)
+np.random.seed(1)
 
 # Set style for better visualizations
 plt.style.use('seaborn-v0_8-darkgrid')
